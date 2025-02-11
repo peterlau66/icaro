@@ -25,6 +25,10 @@ import org.openqa.selenium.Alert;
 import org.openqa.selenium.Keys;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 public class IcaroTest {
@@ -40,7 +44,7 @@ public class IcaroTest {
 	//System.setProperty("webdriver.chrome.driver","C:\\work\\chromedriver-win32\\chromedriver-win64\\chromedriver.exe");	  
     driver = new ChromeDriver();
     
-    //the following setting for headless
+    //the following setting for headless, need to comment the above line
     //ChromeOptions chromeOptions = new ChromeOptions();
     //chromeOptions.addArguments("--headless");
     //driver = new ChromeDriver(chromeOptions);
@@ -54,7 +58,7 @@ public class IcaroTest {
     driver.quit();
   }
   @Test
-  public void icaro() throws InterruptedException {
+  public void icaro() throws InterruptedException, IOException {
     driver.get("https://www.demoblaze.com/index.html");
     driver.manage().window().maximize();
     // click login link
@@ -66,10 +70,24 @@ public class IcaroTest {
     driver.findElement(By.id("loginpassword")).sendKeys("P@ssw0rd");
     // click login button
     driver.findElement(By.cssSelector("#logInModal .btn-primary")).click();
-    Thread.sleep(2000);
-    driver.findElement(By.id("itemc")).click();
     Thread.sleep(1000);
-    driver.findElement(By.linkText("Samsung galaxy s6")).click();
+    // start data driven, the first column is catp[0] from icaro.csv
+    // start data driven, the second column is catp[1] from icaro.csv
+    // start data driven, the third column is catp[2] from icaro.csv
+	String csvFile = "/work/icaro.csv";
+	BufferedReader br = null;
+	String line = "";
+	String cvsSplitBy = ",";
+	br = new BufferedReader(new FileReader(csvFile));
+		while ((line = br.readLine()) != null) {
+        String[] catp = line.split(cvsSplitBy);
+
+    //Click linkText: Phones, Laptops, Monitors (the first column of icaro.csv) 
+    Thread.sleep(1000);
+    driver.findElement(By.linkText(catp[0])).click();
+    Thread.sleep(1000);
+    //click product name, the second column of icaro.csv
+    driver.findElement(By.linkText(catp[1])).click();
     Thread.sleep(1000);
     driver.findElement(By.linkText("Add to cart")).click();
     Thread.sleep(1000);
@@ -90,12 +108,14 @@ public class IcaroTest {
     //Click Place Order Button
     driver.findElement(By.cssSelector(".btn-success")).click();
     Thread.sleep(1000);
-    driver.findElement(By.id("name")).click();
+    //driver.findElement(By.id("name")).click();
     driver.findElement(By.id("name")).sendKeys("Peter Liu");
     driver.findElement(By.id("country")).sendKeys("Canada");
     driver.findElement(By.id("city")).sendKeys("Scarborough");
-    driver.findElement(By.id("card")).click();
+    //driver.findElement(By.id("card")).click();
     driver.findElement(By.id("card")).sendKeys("1234567890");
+    driver.findElement(By.id("month")).sendKeys("02");
+    driver.findElement(By.id("year")).sendKeys("2026");
     // Click Purchase Button
     driver.findElement(By.cssSelector("#orderModal .btn-primary")).click();
     // Verify order summary
@@ -103,7 +123,8 @@ public class IcaroTest {
     String bodyText = driver.findElement(By.cssSelector("body > div.sweet-alert.showSweetAlert.visible > p")).getText();
     //if we don't want stop test whenever assertion failed. use try / catch
     try {
-    	assertTrue(bodyText.contains("Amount: 360 USD"));} 
+    	//assertTrue(bodyText.contains(the third column of icaro.csv));} 
+    	assertTrue(bodyText.contains(catp[2]));}
     	catch (AssertionError e) {
        	String message = e.getMessage();
     	System.out.println("Assertion Amount failed: " + message);
@@ -136,6 +157,8 @@ public class IcaroTest {
     
     // Click OK Button
     driver.findElement(By.cssSelector(".confirm")).click();
+    
+	}; //end of while, data driven
     
     Thread.sleep(1000);
     // Click logout Button
